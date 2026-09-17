@@ -1,0 +1,11 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "Output schema of the Actor",
+    "properties": {
+        "notices": {
+            "type": "string",
+            "title": "Delta events (new/updated procurement notices)",
+            "template": "{{links.apiDefaultDatasetUrl}}/items"
+        }
+    }
+}

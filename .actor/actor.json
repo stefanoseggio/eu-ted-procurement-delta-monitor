@@ -1,0 +1,18 @@
+{
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "eu-ted-procurement-delta-monitor",
+    "title": "EU TED Procurement Delta Monitor - Tenders, Awards & CPV Alerts",
+    "description": "Delta-tracks EU public procurement notices - new tenders, contract awards, and status changes - across all 27 EU member states via TED's official public Search API. Genuine field-level change detection: unchanged notices are never re-billed. CPV-code filtering, buyer/winner tracking. Pay-per-event.",
+    "version": "1.0",
+    "buildTag": "latest",
+    "minMemoryMbytes": 512,
+    "maxMemoryMbytes": 2048,
+    "meta": { "templateId": "ts-apify-only", "generatedBy": "Claude Code with Claude Sonnet 5" },
+    "inputSchema": "./input_schema.json",
+    "storages": { "dataset": "./dataset_schema.json" },
+    "output": "./output_schema.json",
+    "changelog": "../CHANGELOG.md",
+    "dockerfile": "../Dockerfile",
+    "categories": ["BUSINESS"]
+}

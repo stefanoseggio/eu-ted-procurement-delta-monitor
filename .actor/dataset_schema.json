@@ -1,0 +1,45 @@
+{
+    "actorSpecification": 1,
+    "fields": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["event_type", "record_id", "notice_identifier", "scraped_at"],
+        "properties": {
+            "@type": { "type": "string", "enum": ["schema:GovernmentPermit"] },
+            "event_id": { "type": "string" },
+            "event_type": { "type": "string", "enum": ["NEW_NOTICE", "NOTICE_UPDATED", "NOTICE_UNCHANGED", "BASELINE_SNAPSHOT"] },
+            "record_id": { "type": "string" },
+            "notice_identifier": { "type": "string" },
+            "publication_number": { "type": ["string", "null"] },
+            "publication_date": { "type": ["string", "null"] },
+            "notice_title": { "type": ["string", "null"] },
+            "buyer_name": { "type": ["string", "null"] },
+            "buyer_country": { "type": ["string", "null"] },
+            "cpv_codes": { "type": "array", "items": { "type": "string" } },
+            "submission_deadline": { "type": ["string", "null"] },
+            "procedure_type": { "type": ["string", "null"] },
+            "estimated_value": { "type": ["number", "null"] },
+            "estimated_value_currency": { "type": ["string", "null"] },
+            "awarded_value": { "type": ["number", "null"] },
+            "awarded_value_currency": { "type": ["string", "null"] },
+            "winner_identifier": { "type": ["string", "null"] },
+            "winner_country": { "type": ["string", "null"] },
+            "winner_size": { "type": ["string", "null"] },
+            "changed_fields": { "type": "array", "items": { "type": "object" } },
+            "status_fingerprint": { "type": "string" },
+            "content_fingerprint": { "type": "string" },
+            "is_new": { "type": "boolean" },
+            "source_url": { "type": "string" },
+            "scraped_at": { "type": "string" }
+        }
+    },
+    "views": {
+        "overview": {
+            "title": "Overview",
+            "transformation": {
+                "fields": ["event_type", "notice_identifier", "notice_title", "buyer_name", "buyer_country", "awarded_value", "awarded_value_currency", "winner_identifier", "scraped_at"]
+            },
+            "display": { "component": "table" }
+        }
+    }
+}

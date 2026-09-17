@@ -1,0 +1,132 @@
+{
+    "title": "EU TED Procurement - Delta Monitor",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "operationMode": {
+            "title": "Operation mode",
+            "type": "string",
+            "description": "INCREMENTAL (default): real production run using TED's pagination mode (fast, bounded by 'Max items'), against the default broad, live-verified query below - this default is intentionally a genuine data-fetching mode, not VALIDATE_QUERY, so that a default/unattended run (including Apify's own daily automated health-check) always exercises real functionality and produces real output rather than a no-op. VALIDATE_QUERY: sends your 'Expert search query' to TED's real, free checkQuerySyntax pre-flight and reports whether it is valid - no notices are fetched, nothing is pushed, nothing is charged; switch to this manually while drafting a new query. BACKFILL: a full historical pull using TED's uncapped ITERATION/scroll mode - use for the first real data run against a broad query, then switch to INCREMENTAL for the recurring schedule.",
+            "editor": "select",
+            "enum": ["INCREMENTAL", "VALIDATE_QUERY", "BACKFILL"],
+            "default": "INCREMENTAL"
+        },
+        "expertQuery": {
+            "title": "Expert search query",
+            "type": "string",
+            "description": "TED's own 'expert search' query string - the exact same syntax and query text used on TED's public Expert Search page (https://ted.europa.eu/en/search/expert-search). This is the ONLY filtering mechanism TED's Search API exposes; there is no separate country/CPV/value input on this actor because there is no separate one on TED's own API - build and validate your query on the Expert Search page (or via this actor's VALIDATE_QUERY mode, which calls TED's own free checkQuerySyntax check), then paste the finished query string here. The default below uses TED's own genuine server-side relative-date function, `today([+-]N)` - recovered directly from TED's own query-validator error message and confirmed live by matching three independent static-date controls exactly (2026-09-17) - to build a self-refreshing rolling 14-day window (CPV 72*, IT/computer services, published in the last 14 days) that never goes stale and never needs a manual date bump. Live-verified match count: 2,332 notices (2026-09-17), versus 42,134 for the prior fixed '>= 20260101' default - an ~18x reduction chosen to cut the number of TED API pages/HTTP round-trips a default run must make. Why this matters: a real run was observed taking 417 seconds end-to-end, past Apify's 300-second (5-minute) default health-check window. Root cause, confirmed live: Apify Cloud's network-path latency to api.ted.europa.eu (individual fetch attempts observed taking 60-150+ seconds) - not a defect in this actor's code or query logic, and not TED's own server, which responded in under 1 second on every live test run against this endpoint. Narrowing the window cuts the number of sequential page-fetches (and therefore chances to hit one of those slow/retried calls) a default run needs, which lowers the probability of a run exceeding 300 seconds - but this is a probability reduction, not a guarantee: even a single HTTP attempt to TED has been observed taking 60-150+ seconds, so a query narrow enough to fit on one page is still exposed to that same latency variance. Adjust the offset (e.g. today(-7) for a tighter/faster default, today(-30) for a wider safety margin) or substitute your own absolute YYYYMMDD date or fully custom query as needed.",
+            "editor": "textarea",
+            "minLength": 1,
+            "default": "publication-date >= today(-14) AND classification-cpv = 72*"
+        },
+        "fields": {
+            "title": "Fields to retrieve",
+            "type": "array",
+            "description": "Which TED notice fields to retrieve per result, using TED's own eForms field IDs. This curated list covers the fields a procurement-intelligence buyer actually tracks (identity, buyer, value, CPV classification, deadline, winner). TED's own API rejects an empty fields array outright, and this actor always tracks notices by 'notice-identifier' internally regardless of your selection here (it's automatically included in every real request even if left unchecked) - so at least one other field should stay selected for the output to carry any actual content. TED exposes several hundred additional fields (the full eForms Business Term taxonomy) not listed here for usability - see TED's Search API Swagger definition (https://api.ted.europa.eu/swagger) for the complete set if you need a field not offered below.",
+            "editor": "select",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+                "enum": [
+                    "notice-identifier",
+                    "publication-number",
+                    "publication-date",
+                    "notice-title",
+                    "notice-type",
+                    "buyer-name",
+                    "organisation-name-buyer",
+                    "organisation-country-buyer",
+                    "classification-cpv",
+                    "deadline-receipt-tender-date-lot",
+                    "procedure-type",
+                    "legal-basis",
+                    "estimated-value-lot",
+                    "estimated-value-cur-lot",
+                    "result-value-lot",
+                    "result-value-notice",
+                    "result-value-cur-notice",
+                    "winner-identifier",
+                    "winner-country",
+                    "winner-size",
+                    "links"
+                ]
+            },
+            "default": [
+                "notice-identifier",
+                "publication-number",
+                "publication-date",
+                "notice-title",
+                "buyer-name",
+                "organisation-name-buyer",
+                "organisation-country-buyer",
+                "classification-cpv",
+                "deadline-receipt-tender-date-lot",
+                "procedure-type",
+                "estimated-value-lot",
+                "estimated-value-cur-lot",
+                "result-value-lot",
+                "result-value-notice",
+                "result-value-cur-notice",
+                "winner-identifier",
+                "winner-country",
+                "winner-size",
+                "links"
+            ]
+        },
+        "scope": {
+            "title": "Search scope",
+            "type": "string",
+            "description": "LATEST: only notices from the current OJ S release. ACTIVE: only currently-open notices. ALL (TED's own default, and this actor's default): every notice matching the query regardless of age or status.",
+            "editor": "select",
+            "enum": ["LATEST", "ACTIVE", "ALL"],
+            "default": "ALL"
+        },
+        "onlyLatestVersions": {
+            "title": "Only latest notice versions",
+            "type": "boolean",
+            "description": "When true, corrigenda/amendments are collapsed to only the latest version of each notice. When false (TED's own default), every published version is returned as its own entry - recommended if you want to observe corrections as their own delta events.",
+            "default": false
+        },
+        "limit": {
+            "title": "Notices per API page",
+            "type": "integer",
+            "description": "Notices requested per call to TED's Search API. TED's own hard cap is 250 per page (and page-size x field-count must stay under 10,000). Lower this if you request many fields at once.",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+        },
+        "maxItems": {
+            "title": "Max records to push this run",
+            "type": "integer",
+            "description": "Stops the run once this many changed/new records have been pushed (and charged, where applicable) - this actor's own safety valve, independent of TED's own per-query caps (15,000 for INCREMENTAL's pagination mode; uncapped for BACKFILL's iteration mode). Records not yet reached when the limit is hit are simply re-evaluated fresh next run. Defaults to 50 so a default/test run completes in well under Apify's automated-test window.",
+            "minimum": 1,
+            "default": 50
+        },
+        "deltaStateName": {
+            "title": "Delta state name",
+            "type": "string",
+            "description": "Names the persistent Key-Value Store this run's delta memory (fingerprints, and for BACKFILL the ITERATION scroll token) lives in. Use a distinct name per independent schedule/query so they don't share baseline progress. Leave as 'default' for a single schedule.",
+            "editor": "textfield",
+            "default": "default"
+        },
+        "resetState": {
+            "title": "Reset delta state",
+            "type": "boolean",
+            "description": "When true, ignores all previously-remembered notices for this deltaStateName and re-baselines from scratch (every notice becomes a fresh, uncharged BASELINE_SNAPSHOT again). Use only to deliberately restart monitoring.",
+            "default": false
+        },
+        "onlyNew": {
+            "title": "Deliver only new/changed records",
+            "type": "boolean",
+            "description": "When true (recommended, and the only free-of-charge default), only NEW_NOTICE and NOTICE_UPDATED events are delivered - never a snapshot of an unchanged notice or a first-run baseline. When false, every matched notice is delivered every run, including BASELINE_SNAPSHOT (first run) and NOTICE_UNCHANGED rows - useful for a full audit/export, but delivers every matched notice uncharged on a first BACKFILL run rather than just the ones worth tracking.",
+            "default": true
+        },
+        "webhookUrl": {
+            "title": "Webhook URL for high-value alerts (optional)",
+            "type": "string",
+            "description": "A Slack Incoming Webhook URL, or any HTTPS endpoint that accepts a JSON POST (e.g. a Make/n8n/Zapier catch-hook), to receive a formatted alert the moment a notice's status-tier fields change (award value, winner identity, or procedure status) - the change class a procurement-BD or compliance team actually escalates on. Independent of, and does not replace, Apify's own platform-level webhook system configurable separately in the Apify Console.",
+            "editor": "textfield"
+        }
+    },
+    "required": ["expertQuery"]
+}

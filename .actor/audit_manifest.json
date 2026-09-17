@@ -1,0 +1,40 @@
+{
+  "actorName": "EU TED Procurement — Delta Monitor",
+  "actorId": "Zxy0w0zjmUoMzacF9",
+  "slug": "stefano_seggio/eu-ted-procurement-delta-monitor",
+  "storeUrl": "https://apify.com/stefano_seggio/eu-ted-procurement-delta-monitor",
+  "repoAssembledFrom": "infrastructure/flagship_ted_eu_procurement_actor",
+  "repoAssembledDate": "2026-09-17",
+  "published": true,
+  "buildNumberAtRepoAssembly": "1.0.5",
+  "ppeConfig": {
+    "apifyActorStartRetained": true,
+    "apifyDefaultDatasetItemRemoved": true,
+    "customEvents": [
+      { "name": "new-notice", "price": 0.02 },
+      { "name": "notice-updated", "price": 0.01 }
+    ],
+    "verifiedAgainstConsole": true,
+    "verifiedAgainstReadme": true
+  },
+  "healthCheckStatus": {
+    "priorObservedRuntimeSeconds": 417,
+    "postMitigationObservedRuntimeSeconds": 81,
+    "mitigation": "expertQuery default changed to a self-refreshing 'publication-date >= today(-14) AND classification-cpv = 72*' window (TED's server-side today([+-]N) function, live-verified), reducing matched notices from 42,134 to 2,332",
+    "rootCause": "Apify Cloud network-path latency to api.ted.europa.eu, not actor code or TED server performance",
+    "guaranteeCaveat": "Reduces but does not guarantee sub-300s completion; a single retried fetch() attempt has been observed taking 60-150+ seconds and tedClient.ts has no per-attempt timeout"
+  },
+  "testCoverage": {
+    "hasTests": false,
+    "testCount": 0,
+    "note": "DISCLOSED GAP: unlike its 3 fleet siblings (77/112/135 passing tests respectively), this actor currently has zero automated test files. The included .github/workflows/deploy.yml's 'npm test' step will fail in CI until test coverage is added. This is a known, disclosed limitation, not an oversight or a silently-patched-around gap."
+  },
+  "knownRisks": [
+    "No per-attempt HTTP timeout in src/tedClient.ts (identified, not implemented — a candidate future hardening)",
+    "Zero test coverage (see testCoverage above)"
+  ],
+  "constraintCompliance": {
+    "inviolableConstraint": "Core extraction/classification logic (src/deltaEngine.ts) and PPE pricing were not altered when this repo was assembled or during the prior latency-mitigation audit.",
+    "verificationMethod": "Independent adversarial re-read plus file-mtime cross-check (no git history existed in the source directory at time of audit)"
+  }
+}
