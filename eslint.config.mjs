@@ -7,7 +7,7 @@ export default [
     ...apifyConfig,
     prettierConfig,
     {
-        files: ['src/**/*.ts', 'test/**/*.ts'],
+        files: ['src/**/*.ts', 'tests/**/*.ts'],
         languageOptions: {
             parserOptions: {
                 project: './tsconfig.eslint.json',

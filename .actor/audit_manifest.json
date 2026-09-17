@@ -25,13 +25,14 @@
     "guaranteeCaveat": "Reduces but does not guarantee sub-300s completion; a single retried fetch() attempt has been observed taking 60-150+ seconds and tedClient.ts has no per-attempt timeout"
   },
   "testCoverage": {
-    "hasTests": false,
-    "testCount": 0,
-    "note": "DISCLOSED GAP: unlike its 3 fleet siblings (77/112/135 passing tests respectively), this actor currently has zero automated test files. The included .github/workflows/deploy.yml's 'npm test' step will fail in CI until test coverage is added. This is a known, disclosed limitation, not an oversight or a silently-patched-around gap."
+    "hasTests": true,
+    "testCount": 143,
+    "testFiles": 6,
+    "coveragePercent": { "statements": 98.59, "branches": 94.93, "functions": 97.87, "lines": 99.61 },
+    "note": "Vitest suite under tests/ (deltaEngine, tedClient, routes, state, main, webhookNotifier) covering canonicalization/fingerprinting/classify state machine, real-shaped mocked TED HTTP responses including retry/backoff and error classification, INCREMENTAL/VALIDATE_QUERY/BACKFILL orchestration and PPE event billing, KV-store state round-tripping, and shutdown-safety wiring. All 143 tests pass; measured with @vitest/coverage-v8."
   },
   "knownRisks": [
-    "No per-attempt HTTP timeout in src/tedClient.ts (identified, not implemented — a candidate future hardening)",
-    "Zero test coverage (see testCoverage above)"
+    "No per-attempt HTTP timeout in src/tedClient.ts (identified, not implemented — a candidate future hardening)"
   ],
   "constraintCompliance": {
     "inviolableConstraint": "Core extraction/classification logic (src/deltaEngine.ts) and PPE pricing were not altered when this repo was assembled or during the prior latency-mitigation audit.",

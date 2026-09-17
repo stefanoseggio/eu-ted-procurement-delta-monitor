@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "type": "module",
     "description": "EU TED (Tenders Electronic Daily) Procurement Delta Monitor: tracks new tenders, contract awards, and status changes across all 27 EU member states via TED's official public Search API, pay-per-event.",
-    "engines": { "node": ">=20.0.0" },
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "dependencies": {
         "apify": "^3.7.0"
     },
@@ -11,6 +13,7 @@
         "@apify/eslint-config": "^2.0.0",
         "@apify/tsconfig": "^0.2.0",
         "@types/node": "^24.0.0",
+        "@vitest/coverage-v8": "^4.1.11",
         "eslint": "^9.29.0",
         "eslint-config-prettier": "^10.1.5",
         "globals": "^17.0.0",
