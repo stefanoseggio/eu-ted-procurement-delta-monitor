@@ -29,7 +29,7 @@
     "testCount": 143,
     "testFiles": 6,
     "coveragePercent": { "statements": 98.59, "branches": 94.93, "functions": 97.87, "lines": 99.61 },
-    "note": "Vitest suite under tests/ (deltaEngine, tedClient, routes, state, main, webhookNotifier) covering canonicalization/fingerprinting/classify state machine, real-shaped mocked TED HTTP responses including retry/backoff and error classification, INCREMENTAL/VALIDATE_QUERY/BACKFILL orchestration and PPE event billing, KV-store state round-tripping, and shutdown-safety wiring. All 143 tests pass; measured with @vitest/coverage-v8."
+    "note": "Vitest suite under test/ (deltaEngine, tedClient, routes, state, main, webhookNotifier) covering canonicalization/fingerprinting/classify state machine, real-shaped mocked TED HTTP responses including retry/backoff and error classification, INCREMENTAL/VALIDATE_QUERY/BACKFILL orchestration and PPE event billing, KV-store state round-tripping, and shutdown-safety wiring. All 143 tests pass; measured with @vitest/coverage-v8."
   },
   "knownRisks": [
     "No per-attempt HTTP timeout in src/tedClient.ts (identified, not implemented — a candidate future hardening)"

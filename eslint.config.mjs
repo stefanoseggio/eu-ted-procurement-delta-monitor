@@ -3,11 +3,11 @@ import prettierConfig from 'eslint-config-prettier';
 import apifyConfig from '@apify/eslint-config/ts.js';
 
 export default [
-    { ignores: ['dist', 'node_modules', 'storage'] },
+    { ignores: ['dist', 'node_modules', 'storage', 'examples'] },
     ...apifyConfig,
     prettierConfig,
     {
-        files: ['src/**/*.ts', 'tests/**/*.ts'],
+        files: ['src/**/*.ts', 'test/**/*.ts'],
         languageOptions: {
             parserOptions: {
                 project: './tsconfig.eslint.json',

@@ -1,9 +1,10 @@
-# Delta Engine v2 — institutional architecture specification
+# AGENTS.md - EU TED Procurement Delta Monitor
 
-Status: authored 2026-09-16. This document is the standardized engineering blueprint for this
-actor and the reference design for future fleet actors. Every claim about TED's own API surface
-below was read directly off TED's live OpenAPI specification (`https://api.ted.europa.eu/api-v3.yaml`,
-fetched and parsed during this sprint) — not assumed from the mandate's premise.
+Technical notes for whoever (human or AI) touches this actor next. This document is the
+standardized engineering blueprint for this actor and the reference design for future fleet
+actors. Status: authored 2026-09-16. Every claim about TED's own API surface below was read
+directly off TED's live OpenAPI specification (`https://api.ted.europa.eu/api-v3.yaml`, fetched
+and parsed during this sprint) — not assumed from the mandate's premise.
 
 ## 0. The one finding that reshapes this entire block
 

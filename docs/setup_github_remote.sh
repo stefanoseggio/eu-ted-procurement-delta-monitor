@@ -19,7 +19,7 @@ set -euo pipefail
 #   APIFY_TOKEN=apify_api_xxxxxxxx ./docs/setup_github_remote.sh <github-repo-name> [--public]
 #
 # The created repository is PRIVATE by default. Pass --public only if you deliberately want this
-# actor's source code publicly visible on GitHub - review LICENSE (MIT, permissive) and consider
+# actor's source code publicly visible on GitHub - review LICENSE (Apache-2.0, permissive) and consider
 # that this also publishes the full existing commit history, not just the current file state.
 
 REPO_NAME="${1:-}"

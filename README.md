@@ -1,6 +1,13 @@
 # EU TED Procurement — Delta Monitor
 
-![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![TED API](https://img.shields.io/badge/data%20source-TED%20official%20public%20API-003399) ![Pricing](https://img.shields.io/badge/pricing-pay--per--event-orange)
+[![Built for Apify](https://img.shields.io/badge/Built%20for-Apify-00C1A2?style=flat-square&logo=apify&logoColor=white)](https://apify.com/stefano_seggio/eu-ted-procurement-delta-monitor)
+[![Pay-Per-Event](https://img.shields.io/badge/Pay--Per--Event-from%20%240.01%2Fevent-blue?style=flat-square)](https://apify.com/stefano_seggio/eu-ted-procurement-delta-monitor)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-D22128?style=flat-square&logo=apache&logoColor=white)](./LICENSE)
+
+[![Run on Apify Store](https://img.shields.io/badge/Run%20on-Apify%20Store-00C1A2?style=for-the-badge&logo=apify&logoColor=white)](https://apify.com/stefano_seggio/eu-ted-procurement-delta-monitor)
+
+Live and public at [apify.com/stefano_seggio/eu-ted-procurement-delta-monitor](https://apify.com/stefano_seggio/eu-ted-procurement-delta-monitor).
 
 Delta-tracks EU public procurement notices — new tenders, contract awards, winner identity, and
 status changes — across all 27 EU member states, via **TED's own official, public, no-auth Search
@@ -15,7 +22,7 @@ regardless of whether that record has ever been seen before. **This actor only c
 actually changed.** A notice you've already seen, unchanged, costs nothing — forever. That's not
 a marketing claim; it's mechanically enforced by the SHA-256 content-fingerprint comparison in
 [`src/deltaEngine.ts`](src/deltaEngine.ts), the same "zero-cost no-change" guarantee standardized
-across this fleet's other actors (see [ARCHITECTURE.md](ARCHITECTURE.md)).
+across this fleet's other actors (see [AGENTS.md](AGENTS.md)).
 
 The other structural difference: **there is nothing to bring your own key for.** TED's Search API
 is free, public, and requires no authentication at all — confirmed directly from TED's own
@@ -198,7 +205,7 @@ ID, safe for downstream deduplication.
 
 ## Architecture
 
-Full spec in [ARCHITECTURE.md](ARCHITECTURE.md). Summary:
+Full spec in [AGENTS.md](AGENTS.md). Summary:
 
 ```
                               ┌─────────────────────┐
@@ -250,10 +257,10 @@ system, configurable separately in the Apify Console.
 
 - **No anti-bot / stealth / TLS-fingerprint impersonation.** TED's Search API is public and
   requires no authentication — there is no bot detection here to bypass. See
-  [ARCHITECTURE.md §0](ARCHITECTURE.md#0-the-one-finding-that-reshapes-this-entire-block) for the
+  [AGENTS.md §0](AGENTS.md#0-the-one-finding-that-reshapes-this-entire-block) for the
   full reasoning.
 - **No BLAKE3.** Evaluated and rejected in favor of SHA-256 for this fleet — see
-  [ARCHITECTURE.md §1.1](ARCHITECTURE.md#11-hash-algorithm-sha-256-not-blake3--an-explicit-reasoned-decision).
+  [AGENTS.md §1.1](AGENTS.md#11-hash-algorithm-sha-256-not-blake3--an-explicit-reasoned-decision).
 - **No structured CPV/country/value filter UI.** TED's API exposes exactly one filter mechanism —
   the expert-query string. Building a "friendlier" structured-filter compiler on top of it would
   require guessing at exact operator grammar this actor's authors did not independently verify
