@@ -76,6 +76,71 @@ const { items } = await client.dataset(run.defaultDatasetId).listItems();
 items.forEach((item) => console.log(`${item.event_type}: ${item.notice_title} — ${item.buyer_name} (${item.buyer_country})`));
 ```
 
+## Use this from Claude Desktop, Cursor, or Windsurf (via MCP)
+
+This actor is also reachable as a tool through Apify's own hosted `@apify/actors-mcp-server` at `https://mcp.apify.com`, scoped to just this one actor via a `?tools=stefano_seggio/eu-ted-procurement-delta-monitor` query string — it is not a separate "Delta Registry MCP server," and each config below connects an MCP client to this single actor, not the wider fleet. Get a token from [Apify Console → Settings → Integrations](https://console.apify.com/settings/integrations) first.
+
+### Claude Desktop
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` on Windows (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS). Claude Desktop connects via the `mcp-remote` stdio bridge, not a direct URL:
+
+```json
+{
+  "mcpServers": {
+    "delta-registry-eu-ted-procurement-delta-monitor": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.apify.com/?tools=stefano_seggio/eu-ted-procurement-delta-monitor",
+        "--header",
+        "Authorization: Bearer ${APIFY_TOKEN}"
+      ]
+    }
+  }
+}
+```
+
+`mcp-remote` does not expand shell environment variables inside the JSON string — paste your real token literally in place of `${APIFY_TOKEN}`, and keep this file out of version control.
+
+### Cursor
+
+Edit `.cursor/mcp.json` (project-scoped) or `~/.cursor/mcp.json` (global). Cursor uses native HTTP transport:
+
+```json
+{
+  "mcpServers": {
+    "delta-registry-eu-ted-procurement-delta-monitor": {
+      "url": "https://mcp.apify.com/?tools=stefano_seggio/eu-ted-procurement-delta-monitor",
+      "headers": {
+        "Authorization": "Bearer ${APIFY_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Edit `~/.codeium/windsurf/mcp_config.json`. Windsurf uses `serverUrl`, not `url`:
+
+```json
+{
+  "mcpServers": {
+    "delta-registry-eu-ted-procurement-delta-monitor": {
+      "serverUrl": "https://mcp.apify.com/?tools=stefano_seggio/eu-ted-procurement-delta-monitor",
+      "headers": {
+        "Authorization": "Bearer ${env:APIFY_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Windsurf's `${env:...}` syntax genuinely resolves from your environment at runtime, unlike `mcp-remote` above.
+
+Want every Delta Registry actor (all 28) reachable from one closed-scope MCP config instead of connecting to each actor individually? See [`delta-registry-website/MCP_INTEGRATION.md`](https://github.com/stefanoseggio/delta-registry-website/blob/main/MCP_INTEGRATION.md).
+
 ## Operation modes
 
 | Mode | What it does | Cost |
@@ -159,6 +224,7 @@ Key fields:
 | `expertQuery` | string | `publication-date >= today(-14) AND classification-cpv = 72*` (live-verified: 2,332 real matching notices as of 2026-09-17, a self-refreshing rolling window via TED's own `today([+-]N)` server-side date function) | TED's own expert-search syntax; the only filter mechanism TED's API exposes. See the [Health-check latency note](#health-check-latency-note) below for why the default was narrowed from the prior fixed `>= 20260101` window (42,134 matches). |
 | `fields` | array | curated 19-field set | TED eForms field IDs to retrieve |
 | `scope` | enum | `ALL` | `LATEST` \| `ACTIVE` \| `ALL` |
+| `onlyLatestVersions` | boolean | `false` | When true, collapses corrigenda/amendments to only the latest version of each notice. When false (TED's own default), every published version is returned as its own entry. |
 | `limit` | integer | 50 | Notices per API page, max 250 |
 | `maxItems` | integer | 50 | This actor's own per-run push cap |
 | `deltaStateName` | string | `default` | Names the persistent delta-state store |
