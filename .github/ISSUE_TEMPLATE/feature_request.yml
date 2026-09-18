@@ -1,0 +1,60 @@
+name: Feature Request
+description: Propose a new input field, output field, or behavior change
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Proposing a structured CPV/country/value filter UI, or a change to the expert-query
+        default? Read this Actor's documented doctrine first (README → "What this actor
+        deliberately does not do") — a structured filter compiler on top of TED's expert-query
+        syntax won't be accepted until that grammar is formally confirmed end-to-end.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the real use case this would unblock, not just the feature itself.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What input field, output field, or behavior would you like to see added?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - New input filter
+        - New output field
+        - New operation mode
+        - Delta-engine / classification logic change
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Can this already be achieved with existing inputs (e.g. expertQuery, fields, scope)? If so, why isn't that sufficient?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I confirmed this isn't already possible with an existing input field (see README → Input reference)
+          required: true
+        - label: If this proposes a filter UI change, I confirmed TED's expert-query grammar actually supports it
+          required: false
