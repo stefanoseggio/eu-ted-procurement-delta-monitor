@@ -193,6 +193,74 @@ this actor, not a renamed stub.
     member for future use, but nothing in the codebase constructs one today - treat it as reserved,
     not implemented, until TED's API is confirmed to return a distinguishable error for this case.
 
+### Known limitation: `runIncremental()`'s `PAGE_NUMBER` mode is not cross-page consistency-guaranteed
+
+Confirmed directly from TED's live API documentation (`https://api.ted.europa.eu/api-v3.yaml`,
+the prose "Pagination mode" section, re-fetched and re-read 2026-09-19), not inferred:
+
+> "This mode is stateless: the user can retrieve any result page, and not necessarily in order.
+> It also means that there is no mechanism to ensure consistency between two retrieved pages: if
+> the user retrieves multiple pages and an OJS is released between two retrieved pages, then the
+> user might miss some notices or have duplicated notices."
+
+`runIncremental()` exclusively uses `paginationMode: 'PAGE_NUMBER'` (see §"Operation modes" above),
+so this is a real, live-acknowledged exposure for that mode, not a hypothetical one - and it is not
+purely theoretical for the *default* `expertQuery`: the rolling 14-day/`classification-cpv=72*`
+default matches ~2,332 notices (README "Health-check latency note"), which at the default
+`limit=50` needs ~47 sequential page fetches to fully walk, each one individually exposed to the
+60-150+ second Apify-Cloud-to-TED latency already documented in that same section. `runBackfill()`
+is unaffected - it exclusively uses `paginationMode: 'ITERATION'`, which TED's own spec describes
+as using an Elasticsearch point-in-time to guarantee no notice is missed or duplicated across pages
+of the same scroll (see the "Scroll mode" prose in the same spec section).
+
+**Why `runIncremental()` was deliberately left on `PAGE_NUMBER` rather than switched to
+`ITERATION`, after evaluating the switch:**
+
+- The two-mode split (`INCREMENTAL` = `PAGE_NUMBER`/capped/scheduled, `BACKFILL` =
+  `ITERATION`/uncapped/historical) is this actor's documented, load-bearing architecture end to
+  end - the README operation-mode table, its architecture diagram, and this file's §"operational
+  modes" description all state it explicitly, and the README's own "Health-check latency note"
+  ties the *current* mitigation for `INCREMENTAL`'s real 417-second-observed runtime specifically
+  to this mode (a narrowed, low-page-count query). Switching the mode without re-validating that
+  mitigation would risk trading a rare, self-healing miss/duplicate for a more frequent
+  health-check timeout - a worse regression for the actor's primary, highest-frequency operation.
+- `ITERATION` mode opens a fresh Elasticsearch point-in-time context per scroll. `runBackfill()`
+  opens one per (typically single, long-lived) historical pull; making `runIncremental()` do the
+  same would mean opening and discarding a new PIT context on *every* scheduled run (potentially
+  hourly or more often, per the user's own Apify schedule) - a materially different, higher-frequency
+  load pattern against TED's public API than either mode currently exercises. Nothing in the live
+  spec documents a rate limit or quota on PIT-context creation frequency for this case, and per
+  this task's own constraint, that can only be safely characterized by real, sustained,
+  scheduled-frequency production traffic, not a one-off local smoke-test request - i.e. it cannot
+  be responsibly verified without a live, running, billed production actor, which is explicitly
+  out of scope for a "safe" fix here.
+- The residual risk is genuinely self-healing given how `runIncremental()` already works: it does
+  **not** track "since the last run" state across runs - every call re-walks the *entire* current
+  result set of `expertQuery` from page 1 (see the loop in `runIncremental()`), reclassifying every
+  notice against the persisted per-notice fingerprint state. A notice missed mid-walk by an
+  OJS release lands as `NEW_NOTICE`/`NOTICE_UPDATED` on the very next scheduled run instead - a
+  bounded delay of exactly one schedule interval, not a permanent loss. A notice *duplicated*
+  mid-walk (returned on two different page fetches within the same run) is reclassified as
+  `NOTICE_UNCHANGED` on its second occurrence in the same run (its fingerprint was already recorded
+  by `recordSeen()` moments earlier), which is never pushed and never charged - see
+  `shouldDeliver()`/§2's zero-cost guarantee - so a duplicate never becomes a duplicated dataset row
+  or a double charge.
+- A user who needs a stronger consistency guarantee than "eventually correct within one schedule
+  interval" already has a supported path: re-running `BACKFILL` periodically (e.g. a slower,
+  monthly cron alongside a faster `INCREMENTAL` schedule) performs the same query in the fully
+  consistency-guaranteed `ITERATION` mode as a reconciliation pass, without any code change.
+
+**Judgment call, stated explicitly:** this was fixed by documentation rather than by switching
+`runIncremental()`'s pagination mode, because the switch's correctness could not be verified
+without a live, scheduled-frequency, billed production run against TED's API (explicitly
+out of scope here), and because the two-mode split it would overturn is this actor's central,
+multiply-documented architectural decision, not an incidental implementation detail. If TED's
+API is later confirmed (via its own docs or support channel) to tolerate frequent PIT-context
+creation at typical Apify schedule frequencies, revisit this by mirroring `runBackfill()`'s loop
+structure in `runIncremental()` with a local (not `state`-persisted - `state.iterationNextToken`
+is BACKFILL-only, see `types.ts`) `iterationNextToken` variable, and replace the
+`TED_PAGINATION_LIMIT`/`page` cap with an equivalent cap on cumulative notices retrieved this run.
+
 ## 4. Structured output pipeline
 
 Dataset rows follow the same real convention as the rest of the fleet: a flat, typed JSON object

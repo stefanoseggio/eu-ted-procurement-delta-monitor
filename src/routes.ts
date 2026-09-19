@@ -215,6 +215,14 @@ export async function runIncremental(input: ActorInput, state: DeltaState): Prom
             break;
         }
 
+        // Known, TED-acknowledged limitation: PAGE_NUMBER is not consistency-guaranteed across
+        // pages of the SAME run (TED's own spec: "no mechanism to ensure consistency between two
+        // retrieved pages" if an OJS release lands mid-walk - a notice can be missed or
+        // duplicated). Deliberately kept on PAGE_NUMBER rather than switched to runBackfill()'s
+        // ITERATION/scroll mode - see AGENTS.md §3 "Known limitation" for the full reasoning and
+        // why it self-heals (this loop re-walks the entire query result set from page 1 on every
+        // scheduled run, so a miss is picked up next run and a duplicate is recognized as
+        // already-seen and never double-pushed/double-charged).
         const response = await searchNotices({
             query: input.expertQuery,
             fields,

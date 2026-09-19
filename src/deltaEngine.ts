@@ -30,7 +30,7 @@ export function firstString(value: TedFieldValue): string | null {
     if (typeof value === 'string') return value.length > 0 ? value : null;
     if (Array.isArray(value)) {
         const [first] = value;
-        if (typeof first === 'string') return first;
+        if (typeof first === 'string') return first.length > 0 ? first : null;
         return null;
     }
     // i18n map: prefer English, then any available language.
