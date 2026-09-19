@@ -1,6 +1,6 @@
 {
     "name": "eu-ted-procurement-delta-monitor",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "module",
     "description": "EU TED (Tenders Electronic Daily) Procurement Delta Monitor: tracks new tenders, contract awards, and status changes across all 27 EU member states via TED's official public Search API, pay-per-event.",
     "engines": {

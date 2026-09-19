@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/compare/eu-ted-procurement-delta-monitor-v1.0.0...eu-ted-procurement-delta-monitor-v1.0.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **ci:** pass RELEASE_PLEASE_TOKEN so release PRs skip the bot-approval gate ([eee0b49](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/commit/eee0b49c60276571b10fa659ab9383636a0a8c82))
+* **deltaEngine:** guard empty-string placeholder in firstString() array branch ([#8](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/issues/8)) ([1e74668](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/commit/1e7466834069c9f60d9b5f201c66d6b925952a1c))
+* **tedClient:** add per-request timeout to searchNotices() fetch call ([#7](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/issues/7)) ([3ae1037](https://github.com/stefanoseggio/eu-ted-procurement-delta-monitor/commit/3ae1037e106427b1f61b2e0b31828902eb7daafb))
+
 ## 1.0.0 - 2026-09-17
 
 ### Fixed
