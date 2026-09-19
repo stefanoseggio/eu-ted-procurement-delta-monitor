@@ -145,7 +145,7 @@ Want every Delta Registry actor (all 28) reachable from one closed-scope MCP con
 
 | Mode | What it does | Cost |
 |---|---|---|
-| `INCREMENTAL` (default) | Real production run, TED's `PAGE_NUMBER` pagination mode (max 15,000 notices/query, 250/page). Intended for scheduled runs against a narrow, recent `publication-date` window. Default here (rather than `VALIDATE_QUERY`) specifically so an unattended/default run — including Apify's own daily automated health-check — always fetches real data. | Pay-per-event (see below) |
+| `INCREMENTAL` (default) | Real production run, TED's `PAGE_NUMBER` pagination mode (max 15,000 notices/query, 250/page — see [Known limitations](#known-limitations) for this mode's one documented consistency caveat). Intended for scheduled runs against a narrow, recent `publication-date` window. Default here (rather than `VALIDATE_QUERY`) specifically so an unattended/default run — including Apify's own daily automated health-check — always fetches real data. | Pay-per-event (see below) |
 | `VALIDATE_QUERY` | Sends your `expertQuery` to TED's own free syntax-check endpoint. No notices fetched, nothing pushed, nothing charged. Switch to this manually while drafting a new query. | Free |
 | `BACKFILL` | Full historical pull using TED's uncapped `ITERATION`/scroll mode. Use once against a broad query to establish history, then switch to `INCREMENTAL` for the recurring schedule. | Pay-per-event (see below) |
 
@@ -332,6 +332,22 @@ system, configurable separately in the Apify Console.
   require guessing at exact operator grammar this actor's authors did not independently verify
   end-to-end; shipping that as a reliability claim would be dishonest. A future revision can add
   this once TED's full expert-query grammar is formally confirmed.
+
+## Known limitations
+
+- **`INCREMENTAL` mode's pagination is not cross-page consistency-guaranteed.** TED's own API docs
+  state plainly that `PAGE_NUMBER` mode (what every `INCREMENTAL` run uses) has "no mechanism to
+  ensure consistency between two retrieved pages" — if TED publishes a new Official Journal S
+  release while a multi-page `INCREMENTAL` run is mid-walk, that run can miss or double-return a
+  notice. `BACKFILL` is unaffected (it uses TED's consistency-guaranteed `ITERATION`/scroll mode).
+  This is a deliberate, evaluated trade-off, not an oversight — see
+  [AGENTS.md's "Known limitation" note in §3](AGENTS.md#known-limitation-runincrementals-page_number-mode-is-not-cross-page-consistency-guaranteed)
+  for the full reasoning and why it self-heals: `INCREMENTAL` re-walks its entire query result set
+  from page 1 on every scheduled run, so a notice missed by this race is simply picked up on the
+  very next run (one schedule interval later), and a notice returned twice in the same run is
+  recognized as already-seen and never double-pushed or double-charged. If you need a stronger
+  guarantee than "eventually correct within one schedule interval," periodically re-run `BACKFILL`
+  (fully consistency-guaranteed) against the same query as a reconciliation pass.
 
 ---
 

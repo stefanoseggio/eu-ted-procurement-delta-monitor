@@ -68,6 +68,14 @@ describe('firstString', () => {
         expect(firstString([])).toBeNull();
     });
 
+    it('returns null when the first element of a string array is an empty-string placeholder', () => {
+        // Defense-in-depth: if TED ever returns an array-valued field with a leading empty-string
+        // element, this must fall through to null the same way the plain-string branch already
+        // does above - not silently accept '' as a valid value that firstNumber() would then
+        // coerce into a fabricated 0 downstream.
+        expect(firstString(['', 'DE987654321'])).toBeNull();
+    });
+
     it('resolves a real `{ lang: string }` i18n map (confirmed live shape for notice-title) preferring eng', () => {
         expect(firstString({ eng: 'Title text', deu: 'Titeltext' })).toBe('Title text');
     });
