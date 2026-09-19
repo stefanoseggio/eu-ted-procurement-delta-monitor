@@ -21,6 +21,15 @@ const USER_AGENT = 'DeltaRegistryTEDMonitor/1.0 (+https://apify.com/stefano_segg
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 1000;
 const MAX_BACKOFF_MS = 30_000;
+/**
+ * Matches this fleet's established pattern (e.g. dataSource.ts/csvSource.ts) - found by
+ * adversarial review to be a real gap here: with no timeout at all, a response that connects
+ * but then stalls indefinitely on headers or body has no code-level bound. The AbortController
+ * below covers the fetch call AND the subsequent body read within the same signal/attempt, not
+ * just the initial connection, so a stall during either one is caught and retried like any
+ * other transient failure.
+ */
+const REQUEST_TIMEOUT_MS = 60_000;
 
 async function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => {
@@ -95,9 +104,10 @@ export async function searchNotices(request: TedSearchRequest): Promise<TedSearc
             await sleep(delay);
         }
 
-        let response: Response;
+        const timeoutController = new AbortController();
+        const timeoutHandle = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
         try {
-            response = await fetch(TED_SEARCH_URL, {
+            const response = await fetch(TED_SEARCH_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -105,33 +115,42 @@ export async function searchNotices(request: TedSearchRequest): Promise<TedSearc
                     'User-Agent': USER_AGENT,
                 },
                 body: JSON.stringify(request),
+                signal: timeoutController.signal,
             });
-        } catch (networkError) {
+
+            if (response.ok) {
+                return (await response.json()) as TedSearchResponse;
+            }
+
+            let body: unknown;
+            try {
+                body = await response.json();
+            } catch {
+                body = await response.text().catch(() => undefined);
+            }
+
+            const classified = classifyHttpError(response.status, body);
+            if (classified.failureClass === 'QUERY_ERROR') {
+                // A query/request defect is never transient - retrying it would just waste calls
+                // and time without changing the outcome. Fail fast.
+                throw classified;
+            }
+            lastError = classified;
+        } catch (error) {
+            if (error instanceof TedApiError) {
+                throw error;
+            }
+            // Covers a genuine network-level failure AND a per-request timeout abort (the
+            // AbortController fires whether the connection itself stalls or a response connects
+            // but then never finishes delivering its body) - both are transient outage
+            // conditions, not code/query defects, so both are retried the same way.
             lastError = new TedApiError(
                 'UPSTREAM_OUTAGE',
-                `Network-level failure reaching api.ted.europa.eu: ${networkError instanceof Error ? networkError.message : String(networkError)}`,
+                `Network-level failure reaching api.ted.europa.eu: ${error instanceof Error ? error.message : String(error)}`,
             );
-            continue;
+        } finally {
+            clearTimeout(timeoutHandle);
         }
-
-        if (response.ok) {
-            return (await response.json()) as TedSearchResponse;
-        }
-
-        let body: unknown;
-        try {
-            body = await response.json();
-        } catch {
-            body = await response.text().catch(() => undefined);
-        }
-
-        const classified = classifyHttpError(response.status, body);
-        if (classified.failureClass === 'QUERY_ERROR') {
-            // A query/request defect is never transient - retrying it would just waste calls
-            // and time without changing the outcome. Fail fast.
-            throw classified;
-        }
-        lastError = classified;
     }
 
     throw lastError ?? new TedApiError('UPSTREAM_OUTAGE', 'TED Search API call failed with no further detail after retries.');
